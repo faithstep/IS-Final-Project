@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Game: Color Squares</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+
+    .score {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    button {
+      padding: 8px 16px;
+      font-size: 1rem;
+      border: none;
+      background-color: #2980b9;
+      color: white;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      cursor: pointer;
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      gap: 15px;
+    }
+
+    .card {
+      width: 100px;
+      height: 100px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      perspective: 600px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      position: relative;
+    }
+
+    .card.flipped .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .card-front {
+      background: #2980b9;
+      color: white;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Memory Game: Color Squares</h1>
+  <div class="score">Attempts: <span id="attempts">0</span></div>
+  <button onclick="initGame()">Restart Game</button>
+  <div class="game-board" id="gameBoard"></div>
+
+  <script>
+    const squareData = [
+      { label: "Red", color: "#e74c3c" },
+      { label: "Green", color: "#2ecc71" },
+      { label: "Blue", color: "#3498db" },
+      { label: "Yellow", color: "#f1c40f" },
+      { label: "Purple", color: "#9b59b6" },
+      { label: "Orange", color: "#e67e22" },
+      { label: "Teal", color: "#1abc9c" },
+      { label: "Pink", color: "#fd79a8" }
+    ];
+
+    let cards = [];
+    let flippedCards = [];
+    let lockBoard = false;
+    let attempts = 0;
+
+    function initGame() {
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+      attempts = 0;
+      updateScore();
+
+      const duplicated = [...squareData, ...squareData]; // 16 cards
+      cards = shuffle(duplicated);
+
+      flippedCards = [];
+      lockBoard = false;
+
+      cards.forEach(data => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.label = data.label;
+
+        card.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">?</div>
+            <div class="card-back" style="background:${data.color}">${data.label}</div>
+          </div>
+        `;
+
+        card.addEventListener('click', () => flipCard(card));
+        board.appendChild(card);
+      });
+    }
+
+    function flipCard(card) {
+      if (lockBoard || card.classList.contains('flipped') || flippedCards.length === 2) return;
+
+      card.classList.add('flipped');
+      flippedCards.push(card);
+
+      if (flippedCards.length === 2) {
+        attempts++;
+        updateScore();
+        checkMatch();
+      }
+    }
+
+    function checkMatch() {
+      const [first, second] = flippedCards;
+      const isMatch = first.dataset.label === second.dataset.label;
+
+      if (isMatch) {
+        flippedCards = [];
+      } else {
+        lockBoard = true;
+        setTimeout(() => {
+          first.classList.remove('flipped');
+          second.classList.remove('flipped');
+          flippedCards = [];
+          lockBoard = false;
+        }, 1000);
+      }
+    }
+
+    function updateScore() {
+      document.getElementById('attempts').textContent = attempts;
+    }
+
+    function shuffle(array) {
+      let cloned = array.slice();
+      for (let i = cloned.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [cloned[i], cloned[j]] = [cloned[j], cloned[i]];
+      }
+      return cloned;
+    }
+
+    window.onload = initGame;
+  </script>
+</body>
+</html>
